@@ -14,16 +14,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.example.workoutdietplanapp.R
-
+import com.example.workoutdietplanapp.viewmodel.UserViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SignInScreen(navController: NavHostController) {
+fun SignInScreen(navController: NavHostController, userViewModel: UserViewModel) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -45,22 +44,29 @@ fun SignInScreen(navController: NavHostController) {
     )
     { innerPadding ->
 
-        Image(
-            painter = painterResource(id = R.drawable.gym_buddies),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
-        )
+        Box(modifier = Modifier.fillMaxSize()) {
+            Image(
+                painter = painterResource(id = R.drawable.gym_buddies),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
 
-        SignInForm(
-            modifier = Modifier.padding(innerPadding),
-            navController = navController
-        )
+            SignInForm(
+                modifier = Modifier.padding(innerPadding),
+                navController = navController,
+                userViewModel = userViewModel
+            )
+        }
     }
 }
 
 @Composable
-fun SignInForm(modifier: Modifier = Modifier, navController: NavHostController) {
+fun SignInForm(
+    modifier: Modifier = Modifier,
+    navController: NavHostController,
+    userViewModel: UserViewModel
+) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
@@ -73,7 +79,7 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavHostController) 
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
-            label = { Text("Email Address") },
+            label = { Text("Email Address",  color = Color.White,) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             textStyle = LocalTextStyle.current.copy(color = Color.White),
             modifier = Modifier.fillMaxWidth()
@@ -84,7 +90,7 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavHostController) 
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text("Password") },
+            label = { Text("Password",  color = Color.White,) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             visualTransformation = PasswordVisualTransformation(),
             textStyle = LocalTextStyle.current.copy(color = Color.White),
@@ -95,7 +101,9 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavHostController) 
 
         Button(
             onClick = {
-                navController.navigate("registration")
+                if (email.isNotBlank() && password.isNotBlank()) {
+                    navController.navigate("home")
+                }
             },
             shape = RoundedCornerShape(8.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
@@ -103,6 +111,7 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavHostController) 
         ) {
             Text("Sign In")
         }
+
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -113,16 +122,11 @@ fun SignInForm(modifier: Modifier = Modifier, navController: NavHostController) 
             Text(
                 text = "Don't have an account?",
                 color = Color.Blue,
+                textDecoration = TextDecoration.Underline,
                 modifier = Modifier.clickable {
-                    navController.navigate("")
+                    navController.navigate("registration")
                 }
             )
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun SignInScreenPreview() {
-    SignInScreen(navController = rememberNavController())
 }
