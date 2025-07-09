@@ -10,7 +10,9 @@ import com.example.workoutdietplanapp.viewmodel.UserViewModel
 
 @Composable
 fun AppNavGraph(navController: NavHostController, userViewModel: UserViewModel) {
-    NavHost(navController = navController, startDestination = Route.SignIn.routeName) {
+
+    NavHost(navController = navController, startDestination = Route.Welcome.routeName) {
+        composable(Route.Welcome.routeName) { WelcomeScreen(navController) }
         composable(Route.SignIn.routeName) { SignInScreen(navController, userViewModel) }
         composable(Route.Registration.routeName) {
             RegistrationForm(
