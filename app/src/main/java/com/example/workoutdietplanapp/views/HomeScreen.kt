@@ -1,6 +1,7 @@
 package com.example.workoutdietplanapp.views
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Logout
@@ -21,6 +22,12 @@ import com.example.workoutdietplanapp.viewmodel.UserViewModel
 fun HomeScreen(navController: NavHostController, userViewModel: UserViewModel) {
     var selectedIndex by remember { mutableStateOf(0) }
     var showLogoutDialog by remember { mutableStateOf(false) }
+
+    val user by userViewModel.user.collectAsState()
+    val isDietSelected by userViewModel.isDietSelected.collectAsState()
+    val level by userViewModel.level.collectAsState()
+    val workouts by userViewModel.workouts.collectAsState()
+    val dietPlan by userViewModel.dietPlan.collectAsState()
 
     Scaffold(
         topBar = {
@@ -64,17 +71,52 @@ fun HomeScreen(navController: NavHostController, userViewModel: UserViewModel) {
             }
         }
     ) { innerPadding ->
-        Box(
+        Column(
             modifier = Modifier
                 .padding(innerPadding)
-                .fillMaxSize(),
-            contentAlignment = Alignment.Center
+                .padding(16.dp)
+                .fillMaxSize()
         ) {
-            Text("Welcome, ${userViewModel.user.collectAsState().value.name}!")
+            Text(
+                text = "Welcome, ${user.name}!",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            Text(
+                text = if (isDietSelected) "Your Diet Plan for $level" else "Your Workout Plan for $level",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+
+            if (isDietSelected) {
+                dietPlan?.let { diet ->
+                    Text("• Protein: ${diet.proteinGrams}g")
+                    Text("• Water: ${diet.waterGlasses} glasses")
+                    Text("• Tips:")
+                    diet.extraTips.forEach { tip ->
+                        Text("- $tip")
+                    }
+                } ?: Text("No diet plan available.")
+            } else {
+                if (workouts.isNotEmpty()) {
+                    LazyColumn {
+                        items(workouts.size) { index ->
+                            val w = workouts[index]
+                            Text("Day ${w.day} - ${w.workout}")
+                            Text("  → ${w.variations} variations x ${w.reps} reps @ ${w.maxWeightKg}kg")
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                    }
+                } else {
+                    Text("No workout plan available.")
+                }
+            }
         }
     }
 
-    // Logout confirmation dialog
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
@@ -83,9 +125,9 @@ fun HomeScreen(navController: NavHostController, userViewModel: UserViewModel) {
             confirmButton = {
                 TextButton(onClick = {
                     showLogoutDialog = false
-                    userViewModel.Logout() // lowercase 'logout'
+                    userViewModel.Logout()
                     navController.navigate(Route.SignIn.routeName) {
-                        popUpTo(0) // Clear navigation stack
+                        popUpTo(0)
                     }
                 }) {
                     Text("Yes")
@@ -99,4 +141,3 @@ fun HomeScreen(navController: NavHostController, userViewModel: UserViewModel) {
         )
     }
 }
-
