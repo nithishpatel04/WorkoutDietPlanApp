@@ -1,5 +1,6 @@
 package com.example.workoutdietplanapp.views
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -10,9 +11,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.workoutdietplanapp.R
 import com.example.workoutdietplanapp.navigation.Route
 import com.example.workoutdietplanapp.viewmodel.UserViewModel
 
@@ -83,12 +87,20 @@ fun ProfileScreen(navController: NavHostController, userViewModel: UserViewModel
             }
         }
     ) { innerPadding ->
-        ProfileContent(
-            userViewModel = userViewModel,
-            modifier = Modifier
-                .padding(innerPadding)
-                .padding(16.dp)
-        )
+        Box(modifier = Modifier.fillMaxSize()) {
+            Image(
+                painter = painterResource(id = R.drawable.gym_profile),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+            ProfileContent(
+                userViewModel = userViewModel,
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .padding(16.dp)
+            )
+        }
     }
 }
 
@@ -102,13 +114,13 @@ fun ProfileContent(userViewModel: UserViewModel, modifier: Modifier = Modifier) 
     ) {
         Text("👤 Profile", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = Color.Black)
 
-        Text("Email: ${user.email}", color = Color.Black)
-        Text("Name: ${user.name}", color = Color.Black)
-        Text("Age: ${user.age}", color = Color.Black)
-        Text("Weight: ${user.weight}", color = Color.Black)
-        Text("Subscription Type: ${user.subscriptionType}", color = Color.Black)
-        Text("Gym Plan: ${if (user.gymPlan) "Yes" else "No"}", color = Color.Black)
-        Text("Diet Plan: ${if (user.dietPlan) "Yes" else "No"}", color = Color.Black)
-        Text("Motivation: ${user.goal}", color = Color.Black)
+        Text("Email: ${user.email}", color = Color.White)
+        Text("Name: ${user.name}", color = Color.White)
+        Text("Age: ${user.age}", color = Color.White)
+        Text("Weight: ${user.weight}", color = Color.White)
+        Text("Subscription Type: ${user.subscriptionType}", color = Color.White)
+        Text("Gym Plan: ${if (user.gymPlan) "Yes" else "No"}", color = Color.White)
+        Text("Diet Plan: ${if (user.dietPlan) "Yes" else "No"}", color = Color.White)
+        Text("Motivation: ${user.goal}", color = Color.White)
     }
 }
