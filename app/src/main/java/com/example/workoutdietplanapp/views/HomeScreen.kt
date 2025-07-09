@@ -146,7 +146,7 @@ fun HomeScreen(navController: NavHostController, userViewModel: UserViewModel) {
             confirmButton = {
                 TextButton(onClick = {
                     showLogoutDialog = false
-                    userViewModel.Logout()
+                    userViewModel.logout()
                     navController.navigate(Route.SignIn.routeName) {
                         popUpTo(0)
                     }

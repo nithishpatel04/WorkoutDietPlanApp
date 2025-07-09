@@ -23,5 +23,10 @@ fun AppNavGraph(navController: NavHostController, userViewModel: UserViewModel) 
         }
         composable(Route.Home.routeName) { HomeScreen(navController, userViewModel) }
         composable(Route.Profile.routeName) { ProfileScreen(navController, userViewModel) }
+
+        composable(Route.EditProfile.routeName) {
+            EditProfileScreen(navController = navController, userViewModel = userViewModel)
+        }
+
     }
 }
