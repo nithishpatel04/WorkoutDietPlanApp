@@ -3,6 +3,7 @@ package com.example.workoutdietplanapp.views
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Logout
@@ -103,14 +104,6 @@ fun HomeScreen(navController: NavHostController, userViewModel: UserViewModel) {
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
 
-//                Text(
-//                    text = if (isDietSelected) "Your Diet Plan for $level" else "Your Workout Plan for $level",
-//                    style = MaterialTheme.typography.titleMedium,
-//                    fontWeight = FontWeight.SemiBold,
-//                    color = Color.White,
-//                    modifier = Modifier.padding(bottom = 12.dp)
-//                )
-
                 Row (
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
@@ -146,11 +139,26 @@ fun HomeScreen(navController: NavHostController, userViewModel: UserViewModel) {
                 } else {
                     if (workouts.isNotEmpty()) {
                         LazyColumn {
-                            items(workouts.size) { index ->
-                                val w = workouts[index]
-                                Text("Day ${w.day} - ${w.workout}", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxSize())
-                                Text("  → ${w.variations} variations x ${w.reps} reps @ ${w.maxWeightKg}kg", color = Color.White, modifier = Modifier.fillMaxSize())
-                                Spacer(modifier = Modifier.height(16.dp))
+//                            items(workouts.size) { index ->
+//                                val w = workouts[index]
+//                                Text("Day ${w.day} - ${w.workout}", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxSize())
+//                                Text("  → ${w.variations} variations x ${w.reps} reps @ ${w.maxWeightKg}kg", color = Color.White, modifier = Modifier.fillMaxSize())
+//                                Spacer(modifier = Modifier.height(16.dp))
+//                            }
+                            items(count = workouts.size) { index ->
+                                val workout = workouts[index]
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 8.dp),
+                                    colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.1f)),
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Column(modifier = Modifier.padding(16.dp)) {
+                                        Text("Day ${workout.day}", color = Color.White, fontWeight = FontWeight.Bold)
+                                        Text("  → ${workout.variations} variations x ${workout.reps} reps @ ${workout.maxWeightKg}kg", color = Color.White)
+                                    }
+                                }
                             }
                         }
                     } else {
