@@ -24,6 +24,16 @@ class UserPreferences (context: Context) {
     fun getUserEmail(): String? = sharedPreferences.getString("email", "") ?: ""
     fun getUserPassword(): String? = sharedPreferences.getString("password", "") ?: ""
 
+    // fun to set remember me flag
+    fun setRememberMe(rememberMe: Boolean) {
+        sharedPreferences.edit().putBoolean("rememberMe", rememberMe).apply()
+    }
+
+    // fun to check if remember me is enabled
+    fun isRememberMeEnabled(): Boolean {
+        return sharedPreferences.getBoolean("rememberMe", false)
+    }
+
     // fun to clear login credentials on logout
     fun clearLoginCredentials() {
         sharedPreferences.edit().clear().apply()

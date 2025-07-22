@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -80,6 +81,9 @@ fun SignInForm(
     // for saving user preferences
     val userPrefs = remember { UserPreferences(context) }
 
+    // for remember me checkbox
+    var rememberMe by remember { mutableStateOf(false) }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -89,6 +93,12 @@ fun SignInForm(
         LaunchedEffect(Unit) {
             val userEmail = userPrefs.getUserEmail()
             val userPassword = userPrefs.getUserPassword()
+
+            rememberMe = userPrefs.isRememberMeEnabled()
+            if(rememberMe) {
+                email = userPrefs.getUserEmail()
+                password = userPrefs.getUserPassword()
+            }
         }
 
         OutlinedTextField(
@@ -114,6 +124,20 @@ fun SignInForm(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(vertical = 8.dp)
+        ) {
+            Checkbox(
+                checked = rememberMe, // userPrefs.isRememberMe()
+                onCheckedChange = {rememberMe = it},
+                colors = CheckboxDefaults.colors(
+                    checkedColor = Color.Black,
+                    uncheckedColor = Color.Black
+                )
+            )
+        }
+
         Button(
             onClick = {
                 val emailTrimmed = email.trim()
@@ -128,6 +152,17 @@ fun SignInForm(
 
                                 // Save login credentials to SharedPreferences
                                 userPrefs.saveLoginCredentials(emailTrimmed, passwordTrimmed)
+
+                                // If using remember me checkbox, then un-comment the below snippet and comment or remove the above snippet
+                                /*
+                                userPrefs.setRememberMe(rememberMe)
+
+                                if (rememberMe) {
+                                    userPrefs.saveLoginCredentials(emailTrimmed, passwordTrimmed)
+                                } else {
+                                    userPrefs.clearLoginCredentials()
+                                }
+                                 */
 
                                 FirebaseDatabaseHelper.fetchUserData(auth.currentUser?.uid ?: "") { user ->
                                     if (user != null) {
