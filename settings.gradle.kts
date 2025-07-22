@@ -21,4 +21,10 @@ dependencyResolutionManagement {
 
 rootProject.name = "Workout&DietPlanApp"
 include(":app")
- 
+
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}

@@ -1,5 +1,6 @@
 package com.example.workoutdietplanapp.models
 
+
 data class WorkoutPlan (
     val day: String,
     val workout: String,

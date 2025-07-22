@@ -1,5 +1,6 @@
 package com.example.workoutdietplanapp.views
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -8,11 +9,15 @@ import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.workoutdietplanapp.R
 import com.example.workoutdietplanapp.navigation.Route
 import com.example.workoutdietplanapp.viewmodel.UserViewModel
 
@@ -22,6 +27,7 @@ fun HomeScreen(navController: NavHostController, userViewModel: UserViewModel) {
     var selectedIndex by remember { mutableStateOf(0) }
     var showLogoutDialog by remember { mutableStateOf(false) }
 
+    val user by userViewModel.user.collectAsState()
     val isDietSelected by userViewModel.isDietSelected.collectAsState()
     val level by userViewModel.level.collectAsState()
     val workouts by userViewModel.workouts.collectAsState()
@@ -69,34 +75,69 @@ fun HomeScreen(navController: NavHostController, userViewModel: UserViewModel) {
             }
         }
     ) { innerPadding ->
-
-        Column(modifier = Modifier.padding(innerPadding).padding(16.dp)) {
-            Text(
-                text = if (isDietSelected) "Diet Plan for $level" else "Workout Plan for $level",
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(bottom = 8.dp)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            // Background Image
+            Image(
+                painter = painterResource(id = R.drawable.home_screen),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
             )
 
-            if (isDietSelected) {
-                dietPlan?.let { diet ->
-                    Text("Protein: ${diet.proteinGrams}g")
-                    Text("Water: ${diet.waterGlasses} glasses")
-                    diet.extraTips.forEach { tip ->
-                        Text("- $tip")
-                    }
-                }
-            } else {
-                LazyColumn {
-                    items(workouts.size) { index ->
-                        val w = workouts[index]
-                        Text("${w.day} - ${w.workout}: ${w.variations} variations x ${w.reps} reps, ${w.maxWeightKg}kg")
+            // Foreground Content
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = "Welcome, ${user.name}!",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                Text(
+                    text = if (isDietSelected) "Your Diet Plan for $level" else "Your Workout Plan for $level",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+
+                if (isDietSelected) {
+                    dietPlan?.let { diet ->
+                        Text("• Protein: ${diet.proteinGrams}g", color = Color.White)
+                        Text("• Water: ${diet.waterGlasses} glasses", color = Color.White)
+                        Text("• Tips:", color = Color.White)
+                        diet.extraTips.forEach { tip ->
+                            Text("- $tip", color = Color.White)
+                        }
+                    } ?: Text("No diet plan available.", color = Color.White)
+                } else {
+                    if (workouts.isNotEmpty()) {
+                        LazyColumn {
+                            items(workouts.size) { index ->
+                                val w = workouts[index]
+                                Text("Day ${w.day} - ${w.workout}", color = Color.White)
+                                Text("  → ${w.variations} variations x ${w.reps} reps @ ${w.maxWeightKg}kg", color = Color.White)
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
+                        }
+                    } else {
+                        Text("No workout plan available.", color = Color.White)
                     }
                 }
             }
         }
     }
 
-    // Logout confirmation dialog
+    // Logout Dialog
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
@@ -105,9 +146,9 @@ fun HomeScreen(navController: NavHostController, userViewModel: UserViewModel) {
             confirmButton = {
                 TextButton(onClick = {
                     showLogoutDialog = false
-                    userViewModel.Logout() // lowercase 'logout'
+                    userViewModel.logout()
                     navController.navigate(Route.SignIn.routeName) {
-                        popUpTo(0) // Clear navigation stack
+                        popUpTo(0)
                     }
                 }) {
                     Text("Yes")
@@ -121,4 +162,3 @@ fun HomeScreen(navController: NavHostController, userViewModel: UserViewModel) {
         )
     }
 }
-

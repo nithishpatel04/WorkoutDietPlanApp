@@ -1,26 +1,28 @@
 package com.example.workoutdietplanapp.views
 
+import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
-import com.example.workoutdietplanapp.viewmodel.UserViewModel
-import androidx.compose.foundation.Image
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import com.example.workoutdietplanapp.R
 import com.example.workoutdietplanapp.navigation.Route
+import com.example.workoutdietplanapp.viewmodel.UserViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RegistrationForm(navController: NavHostController, userViewModel: UserViewModel, modifier: Modifier) {
+fun RegistrationForm(navController: NavHostController, userViewModel: UserViewModel, modifier: Modifier = Modifier) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -42,7 +44,6 @@ fun RegistrationForm(navController: NavHostController, userViewModel: UserViewMo
     ) { innerPadding ->
 
         Box(modifier = Modifier.fillMaxSize()) {
-            // Background image
             Image(
                 painter = painterResource(id = R.drawable.gym_registration),
                 contentDescription = null,
@@ -50,21 +51,21 @@ fun RegistrationForm(navController: NavHostController, userViewModel: UserViewMo
                 modifier = Modifier.fillMaxSize()
             )
 
-            // Foreground form
-            RegistrationFormScreen(
+            RegistrationFormScreenContent(
                 navController = navController,
                 userViewModel = userViewModel,
                 modifier = Modifier.padding(innerPadding)
-
             )
         }
     }
 }
 
-
-
 @Composable
-fun RegistrationFormScreen(navController: NavHostController, userViewModel: UserViewModel, modifier: Modifier) {
+fun RegistrationFormScreenContent(
+    navController: NavHostController,
+    userViewModel: UserViewModel,
+    modifier: Modifier = Modifier
+) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
@@ -75,6 +76,8 @@ fun RegistrationFormScreen(navController: NavHostController, userViewModel: User
     var dietPlan by remember { mutableStateOf(false) }
     var motivation by remember { mutableStateOf("") }
 
+    val context = LocalContext.current
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -84,23 +87,25 @@ fun RegistrationFormScreen(navController: NavHostController, userViewModel: User
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
-            label = { Text("Email",  color = Color.White) },
+            label = { Text("Email", color = Color.White) },
             textStyle = LocalTextStyle.current.copy(color = Color.White),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
         )
 
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text("Password",  color = Color.White,) },
+            label = { Text("Password", color = Color.White) },
             visualTransformation = PasswordVisualTransformation(),
             textStyle = LocalTextStyle.current.copy(color = Color.White),
             modifier = Modifier.fillMaxWidth()
         )
+
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
-            label = { Text("Name",  color = Color.White,) },
+            label = { Text("Name", color = Color.White) },
             textStyle = LocalTextStyle.current.copy(color = Color.White),
             modifier = Modifier.fillMaxWidth()
         )
@@ -108,7 +113,7 @@ fun RegistrationFormScreen(navController: NavHostController, userViewModel: User
         OutlinedTextField(
             value = age,
             onValueChange = { age = it },
-            label = { Text("Age",  color = Color.White,) },
+            label = { Text("Age", color = Color.White) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             textStyle = LocalTextStyle.current.copy(color = Color.White),
             modifier = Modifier.fillMaxWidth()
@@ -117,14 +122,14 @@ fun RegistrationFormScreen(navController: NavHostController, userViewModel: User
         OutlinedTextField(
             value = weight,
             onValueChange = { weight = it },
-            label = { Text("Weight (kg)",  color = Color.White) },
+            label = { Text("Weight (kg)", color = Color.White) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             textStyle = LocalTextStyle.current.copy(color = Color.White),
             modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(8.dp))
-        Text("Subscription Type",  color = Color.White)
+        Text("Subscription Type", color = Color.White)
         Row {
             RadioButton(
                 selected = subscriptionType == "Monthly",
@@ -140,26 +145,25 @@ fun RegistrationFormScreen(navController: NavHostController, userViewModel: User
         }
 
         Spacer(modifier = Modifier.height(8.dp))
-        Text("Plans",  color = Color.White,)
+        Text("Plans", color = Color.White)
         Row {
             Checkbox(
                 checked = gymPlan,
                 onCheckedChange = { gymPlan = it }
             )
-            Text("Gym Plan",  color = Color.White,)
+            Text("Gym Plan", color = Color.White)
             Spacer(modifier = Modifier.width(16.dp))
             Checkbox(
                 checked = dietPlan,
                 onCheckedChange = { dietPlan = it }
             )
-            Text("Diet Plan",  color = Color.White)
-            Spacer(modifier = Modifier.width(16.dp))
+            Text("Diet Plan", color = Color.White)
         }
 
         OutlinedTextField(
             value = motivation,
             onValueChange = { motivation = it },
-            label = { Text("Motivation",  color = Color.White,) },
+            label = { Text("Motivation", color = Color.White) },
             textStyle = LocalTextStyle.current.copy(color = Color.White),
             modifier = Modifier
                 .fillMaxWidth()
@@ -170,21 +174,29 @@ fun RegistrationFormScreen(navController: NavHostController, userViewModel: User
 
         Button(
             onClick = {
-                if (name.isNotBlank() && age.isNotBlank() && weight.isNotBlank() && motivation.isNotBlank()) {
-                    userViewModel.updateProfile(
+                if (email.isNotBlank() && password.isNotBlank() && name.isNotBlank() && age.isNotBlank() && weight.isNotBlank() && motivation.isNotBlank()) {
+                    userViewModel.registerUser(
                         email = email,
                         password = password,
                         name = name,
-                        age = age.toInt(),
-                        weight = weight.toFloat(),
+                        age = age.toIntOrNull() ?: 0,
+                        weight = weight.toFloatOrNull() ?: 0f,
                         subscriptionType = subscriptionType,
                         gymPlan = gymPlan,
                         dietPlan = dietPlan,
                         motivation = motivation
-                    )
-
-                    // Optionally navigate or just stay
-                    navController.navigate(Route.Home.routeName)
+                    ) { success, message ->
+                        if (success) {
+                            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                            navController.navigate(Route.SignIn.routeName) {
+                                popUpTo(Route.Registration.routeName) { inclusive = true }
+                            }
+                        } else {
+                            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                        }
+                    }
+                } else {
+                    Toast.makeText(context, "Please fill all required fields", Toast.LENGTH_SHORT).show()
                 }
             },
             modifier = Modifier.fillMaxWidth()
@@ -193,4 +205,3 @@ fun RegistrationFormScreen(navController: NavHostController, userViewModel: User
         }
     }
 }
-

@@ -1,19 +1,19 @@
 package com.example.workoutdietplanapp.viewmodel
 
 import androidx.lifecycle.ViewModel
+import com.example.workoutdietplanapp.firebase.FirebaseDatabaseHelper
 import com.example.workoutdietplanapp.models.DietPlan
 import com.example.workoutdietplanapp.models.WorkoutPlan
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-// Updated data class with new fields
 data class User(
     val email: String = "",
     val password: String = "",
     val name: String = "",
     val age: Int = 0,
     val weight: Float = 0f,
-    val goal: String = "", // This will now be treated as "motivation"
+    val goal: String = "",               // internal name is goal
     val subscriptionType: String = "",
     val gymPlan: Boolean = false,
     val dietPlan: Boolean = false,
@@ -21,14 +21,30 @@ data class User(
 )
 
 class UserViewModel : ViewModel() {
+
     private val _user = MutableStateFlow(User())
     val user: StateFlow<User> = _user
+
+    private val _isDietSelected = MutableStateFlow(false)
+    val isDietSelected: StateFlow<Boolean> = _isDietSelected
+
+    private val _level = MutableStateFlow("Beginner")
+    val level: StateFlow<String> = _level
+
+    private val _workouts = MutableStateFlow<List<WorkoutPlan>>(emptyList())
+    val workouts: StateFlow<List<WorkoutPlan>> = _workouts
+
+    private val _dietPlan = MutableStateFlow<DietPlan?>(null)
+    val dietPlan: StateFlow<DietPlan?> = _dietPlan
+
+    init {
+        loadPlans(_level.value)
+    }
 
     fun login(email: String) {
         _user.value = _user.value.copy(email = email, isLoggedIn = true)
     }
 
-    // Updated updateProfile to include new fields
     fun updateProfile(
         email: String,
         password: String,
@@ -49,25 +65,16 @@ class UserViewModel : ViewModel() {
             subscriptionType = subscriptionType,
             gymPlan = gymPlan,
             dietPlan = dietPlan,
-            goal = motivation // 'goal' in User is being used for motivation
+            goal = motivation
         )
     }
 
-    // Home Screen Code
-    val _isDietSelected = MutableStateFlow(false)
-    val isDietSelected: StateFlow<Boolean> = _isDietSelected
-
-    val _level = MutableStateFlow("Beginner") // Replace with user level later
-    val level: StateFlow<String> = _level
-
-    val _workouts = MutableStateFlow<List<WorkoutPlan>>(emptyList())
-    val workouts: StateFlow<List<WorkoutPlan>> = _workouts
-
-    val _dietPlan = MutableStateFlow<DietPlan?>(null)
-    val dietPlan: StateFlow<DietPlan?> = _dietPlan
-
-    init {
-        loadPlans(_level.value)
+    fun setUser(name: String, email: String, age: Int) {
+        _user.value = _user.value.copy(
+            name = name,
+            email = email,
+            age = age
+        )
     }
 
     fun toggleView() {
@@ -79,7 +86,7 @@ class UserViewModel : ViewModel() {
         _dietPlan.value = loadDiet(level)
     }
 
-    fun loadWorkouts(level: String): List<WorkoutPlan> {
+    private fun loadWorkouts(level: String): List<WorkoutPlan> {
         val base = when (level) {
             "Intermediate" -> 20
             "Advance" -> 35
@@ -96,7 +103,7 @@ class UserViewModel : ViewModel() {
         }
     }
 
-    fun loadDiet(level: String): DietPlan {
+    private fun loadDiet(level: String): DietPlan {
         return when (level) {
             "Intermediate" -> DietPlan("Intermediate", 100, 10, listOf("2 boiled eggs", "1 banana", "No sugar drinks"))
             "Advance" -> DietPlan("Advance", 130, 12, listOf("Protein shake post workout", "Avoid processed food"))
@@ -104,9 +111,69 @@ class UserViewModel : ViewModel() {
         }
     }
 
-    fun Logout() {
+    fun logout() {
         _user.value = User()
     }
 
     fun isLoggedIn(): Boolean = _user.value.isLoggedIn
+
+    // Register user in Firebase Authentication + save user data to Firebase Realtime DB
+    fun registerUser(
+        email: String,
+        password: String,
+        name: String,
+        age: Int,
+        weight: Float,
+        subscriptionType: String,
+        gymPlan: Boolean,
+        dietPlan: Boolean,
+        motivation: String,
+        onResult: (Boolean, String) -> Unit
+    ) {
+        val newUser = User(
+            email = email,
+            password = password,
+            name = name,
+            age = age,
+            weight = weight,
+            subscriptionType = subscriptionType,
+            gymPlan = gymPlan,
+            dietPlan = dietPlan,
+            goal = motivation,
+            isLoggedIn = true
+        )
+
+        FirebaseDatabaseHelper.registerUserAuth(email, password) { authSuccess, authMessage ->
+            if (authSuccess) {
+                FirebaseDatabaseHelper.saveUserData(newUser) { saveSuccess ->
+                    if (saveSuccess) {
+                        _user.value = newUser
+                        onResult(true, "User registered successfully")
+                    } else {
+                        onResult(false, "Failed to save user data")
+                    }
+                }
+            } else {
+                onResult(false, authMessage)
+            }
+        }
+    }
+
+    // Fetch user profile data from Firebase Realtime DB by email
+    fun fetchUserData(email: String, onResult: (Boolean, String) -> Unit) {
+        FirebaseDatabaseHelper.fetchUserData(email) { fetchedUser ->
+            if (fetchedUser != null) {
+                _user.value = fetchedUser.copy(isLoggedIn = true)
+                onResult(true, "User data loaded")
+            } else {
+                onResult(false, "Failed to load user data")
+            }
+        }
+    }
+
+    // Update user profile locally after editing
+    fun updateUserLocally(name: String, password: String, goal: String) {
+        val current = _user.value
+        _user.value = current.copy(name = name, password = password, goal = goal)
+    }
 }
