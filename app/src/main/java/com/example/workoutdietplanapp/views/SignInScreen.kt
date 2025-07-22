@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.workoutdietplanapp.R
 import com.example.workoutdietplanapp.firebase.FirebaseDatabaseHelper
+import com.example.workoutdietplanapp.utils.UserPreferences
 import com.example.workoutdietplanapp.viewmodel.UserViewModel
 import com.google.firebase.auth.FirebaseAuth
 
@@ -76,12 +77,20 @@ fun SignInForm(
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
 
+    // for saving user preferences
+    val userPrefs = remember { UserPreferences(context) }
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp),
         verticalArrangement = Arrangement.Top
     ) {
+        LaunchedEffect(Unit) {
+            val userEmail = userPrefs.getUserEmail()
+            val userPassword = userPrefs.getUserPassword()
+        }
+
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
@@ -116,6 +125,9 @@ fun SignInForm(
                             if (task.isSuccessful) {
                                 val userEmail = auth.currentUser?.email ?: ""
                                 userViewModel.login(userEmail)
+
+                                // Save login credentials to SharedPreferences
+                                userPrefs.saveLoginCredentials(emailTrimmed, passwordTrimmed)
 
                                 FirebaseDatabaseHelper.fetchUserData(auth.currentUser?.uid ?: "") { user ->
                                     if (user != null) {
