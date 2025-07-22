@@ -96,8 +96,8 @@ fun SignInForm(
 
             rememberMe = userPrefs.isRememberMeEnabled()
             if(rememberMe) {
-                email = userPrefs.getUserEmail()
-                password = userPrefs.getUserPassword()
+                email = userPrefs.getUserEmail() ?: ""
+                password = userPrefs.getUserPassword() ?: ""
             }
         }
 
