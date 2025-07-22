@@ -124,9 +124,9 @@ fun HomeScreen(navController: NavHostController, userViewModel: UserViewModel) {
                         LazyColumn {
                             items(workouts.size) { index ->
                                 val w = workouts[index]
-                                Text("Day ${w.day} - ${w.workout}", color = Color.White)
-                                Text("  → ${w.variations} variations x ${w.reps} reps @ ${w.maxWeightKg}kg", color = Color.White)
-                                Spacer(modifier = Modifier.height(8.dp))
+                                Text("Day ${w.day} - ${w.workout}", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxSize())
+                                Text("  → ${w.variations} variations x ${w.reps} reps @ ${w.maxWeightKg}kg", color = Color.White, modifier = Modifier.fillMaxSize())
+                                Spacer(modifier = Modifier.height(16.dp))
                             }
                         }
                     } else {
