@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -102,13 +103,36 @@ fun HomeScreen(navController: NavHostController, userViewModel: UserViewModel) {
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
 
-                Text(
-                    text = if (isDietSelected) "Your Diet Plan for $level" else "Your Workout Plan for $level",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.White,
-                    modifier = Modifier.padding(bottom = 12.dp)
-                )
+//                Text(
+//                    text = if (isDietSelected) "Your Diet Plan for $level" else "Your Workout Plan for $level",
+//                    style = MaterialTheme.typography.titleMedium,
+//                    fontWeight = FontWeight.SemiBold,
+//                    color = Color.White,
+//                    modifier = Modifier.padding(bottom = 12.dp)
+//                )
+
+                Row (
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = if (isDietSelected) "Your Diet Plan for $level" else "Your Workout Plan for $level",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White
+                    )
+                    Switch(
+                        checked = isDietSelected,
+                        onCheckedChange = { userViewModel.toggleView() },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = Color.Black,
+                            uncheckedThumbColor = Color.White,
+                            uncheckedTrackColor = Color.Black
+                        )
+                    )
+                }
 
                 if (isDietSelected) {
                     dietPlan?.let { diet ->
