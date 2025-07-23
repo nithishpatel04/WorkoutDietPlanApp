@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Person
@@ -85,6 +86,10 @@ fun ProfileScreen(navController: NavHostController, userViewModel: UserViewModel
                     IconButton(onClick = { /* Already on Profile */ }) {
                         Icon(Icons.Default.Person, contentDescription = "Profile", tint = Color.White)
                     }
+                    IconButton(onClick = { navController.navigate(Route.DietPlan.routeName) }) {
+                        Icon(Icons.Default.FitnessCenter, contentDescription = "Diet Plan", tint = Color.White)
+                    }
+
                     IconButton(onClick = { showLogoutDialog = true }) {
                         Icon(Icons.Default.Logout, contentDescription = "Logout", tint = Color.White)
                     }
