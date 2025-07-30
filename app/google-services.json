@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "604879830082",
+    "project_id": "stronger-n-better",
+    "storage_bucket": "stronger-n-better.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:604879830082:android:db2e4a773ad82f342541db",
+        "android_client_info": {
+          "package_name": "com.example.workoutdietplanapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDTjtDZ6Ub8EvGGitp-Y2sWWW6KPl9aW5k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
