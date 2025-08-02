@@ -25,6 +25,7 @@ import androidx.navigation.NavHostController
 import com.example.workoutdietplanapp.R
 import com.example.workoutdietplanapp.navigation.Route
 import com.example.workoutdietplanapp.viewmodel.UserViewModel
+import kotlinx.coroutines.flow.map  // <-- Import for map extension on Flow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -130,6 +131,9 @@ fun ProfileContent(
 ) {
     val user by userViewModel.user.collectAsState()
 
+    val height by userViewModel.heightCm.collectAsState()
+    val weight by userViewModel.weightKg.collectAsState()
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -164,7 +168,8 @@ fun ProfileContent(
                 ProfileRow("Name", user.name)
                 ProfileRow("Email", user.email)
                 ProfileRow("Age", user.age.toString())
-                ProfileRow("Weight", "${user.weight} kg")
+                ProfileRow("Height", "${"%.1f".format(height)} cm")
+                ProfileRow("Weight", "${"%.1f".format(weight)} kg")
                 ProfileRow("Subscription", user.subscriptionType)
                 ProfileRow("Gym Plan", if (user.gymPlan) "Yes" else "No")
                 ProfileRow("Diet Plan", if (user.dietPlan) "Yes" else "No")
@@ -185,6 +190,7 @@ fun ProfileContent(
         }
     }
 }
+
 
 @Composable
 fun ProfileRow(label: String, value: String) {

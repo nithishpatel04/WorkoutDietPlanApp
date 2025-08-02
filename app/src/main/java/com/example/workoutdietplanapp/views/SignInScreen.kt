@@ -1,7 +1,7 @@
 package com.example.workoutdietplanapp.views
 
+import android.content.Context
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -24,10 +24,15 @@ import com.example.workoutdietplanapp.R
 import com.example.workoutdietplanapp.firebase.FirebaseDatabaseHelper
 import com.example.workoutdietplanapp.viewmodel.UserViewModel
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignInScreen(navController: NavHostController, userViewModel: UserViewModel) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope() // CoroutineScope here
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -45,9 +50,9 @@ fun SignInScreen(navController: NavHostController, userViewModel: UserViewModel)
                     titleContentColor = Color.White
                 )
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { innerPadding ->
-
         Box(modifier = Modifier.fillMaxSize()) {
             Image(
                 painter = painterResource(id = R.drawable.gym_buddies),
@@ -59,7 +64,9 @@ fun SignInScreen(navController: NavHostController, userViewModel: UserViewModel)
             SignInForm(
                 modifier = Modifier.padding(innerPadding),
                 navController = navController,
-                userViewModel = userViewModel
+                userViewModel = userViewModel,
+                snackbarHostState = snackbarHostState,
+                scope = scope // Pass CoroutineScope here
             )
         }
     }
@@ -69,12 +76,16 @@ fun SignInScreen(navController: NavHostController, userViewModel: UserViewModel)
 fun SignInForm(
     modifier: Modifier = Modifier,
     navController: NavHostController,
-    userViewModel: UserViewModel
+    userViewModel: UserViewModel,
+    snackbarHostState: SnackbarHostState,
+    scope: CoroutineScope // Use CoroutineScope here
 ) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
+
+    val sharedPref = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+    var email by remember { mutableStateOf(sharedPref.getString("email", "") ?: "") }
+    var password by remember { mutableStateOf(sharedPref.getString("password", "") ?: "") }
 
     Column(
         modifier = modifier
@@ -114,40 +125,60 @@ fun SignInForm(
                     auth.signInWithEmailAndPassword(emailTrimmed, passwordTrimmed)
                         .addOnCompleteListener { task ->
                             if (task.isSuccessful) {
+                                // Save credentials to SharedPreferences
+                                with(sharedPref.edit()) {
+                                    putString("email", emailTrimmed)
+                                    putString("password", passwordTrimmed)
+                                    apply()
+                                }
+
                                 val userEmail = auth.currentUser?.email ?: ""
                                 userViewModel.login(userEmail)
 
                                 FirebaseDatabaseHelper.fetchUserData(auth.currentUser?.uid ?: "") { user ->
                                     if (user != null) {
                                         userViewModel.setUser(
-                                            user.name, user.email, user.age,
+                                            name = user.name,
+                                            email = user.email,
+                                            age = user.age,
                                             height = user.height,
-                                            weight = user.weight
+                                            weight = user.weight,
+                                            goal = user.goal
                                         )
-                                        Toast.makeText(context, "Welcome ${user.name}", Toast.LENGTH_SHORT).show()
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar("Welcome ${user.name}")
+                                        }
                                         navController.navigate("home")
                                     } else {
-                                        Toast.makeText(context, "Failed to load user profile.", Toast.LENGTH_LONG).show()
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar("Failed to load user profile.")
+                                        }
                                     }
                                 }
                             } else {
                                 Log.e("SignIn", "Login failed", task.exception)
-                                Toast.makeText(context, "Login failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                                scope.launch {
+                                    snackbarHostState.showSnackbar("Login failed: ${task.exception?.message}")
+                                }
                             }
                         }
                         .addOnFailureListener { exception ->
                             Log.e("SignIn", "FailureListener", exception)
-                            Toast.makeText(context, "Login failed: ${exception.message}", Toast.LENGTH_LONG).show()
+                            scope.launch {
+                                snackbarHostState.showSnackbar("Login failed: ${exception.message}")
+                            }
                         }
                 } else {
-                    Toast.makeText(context, "Please enter email and password", Toast.LENGTH_SHORT).show()
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Please enter email and password")
+                    }
                 }
             },
             shape = RoundedCornerShape(8.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Sign In")
+            Text("Sign In", color = Color.White)
         }
 
         Spacer(modifier = Modifier.height(16.dp))

@@ -1,153 +1,195 @@
 package com.example.workoutdietplanapp.views
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.workoutdietplanapp.viewmodel.UserViewModel
-import com.example.workoutdietplanapp.viewmodel.User
-import com.example.workoutdietplanapp.firebase.FirebaseDatabaseHelper
-import com.google.firebase.auth.FirebaseAuth
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditProfileScreen(navController: NavHostController, userViewModel: UserViewModel) {
-    val context = LocalContext.current
+
     val user by userViewModel.user.collectAsState()
 
     var name by remember { mutableStateOf(user.name) }
     var email by remember { mutableStateOf(user.email) }
-    var password by remember { mutableStateOf(user.password) }
-    var motivation by remember { mutableStateOf(user.goal) }
+    var oldPassword by remember { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf(user.password) }
     var age by remember { mutableStateOf(user.age.toString()) }
     var height by remember { mutableStateOf(user.height.toString()) }
     var weight by remember { mutableStateOf(user.weight.toString()) }
+    var motivation by remember { mutableStateOf(user.goal) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text("Edit Profile", style = MaterialTheme.typography.headlineSmall)
+    var showOldPassword by remember { mutableStateOf(false) }
+    var showNewPassword by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    var message by remember { mutableStateOf("") }
 
-        OutlinedTextField(
-            value = name,
-            onValueChange = { name = it },
-            label = { Text("Name") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        OutlinedTextField(
-            value = email,
-            onValueChange = {},
-            label = { Text("Email") },
-            enabled = false,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Password") },
-            modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            visualTransformation = PasswordVisualTransformation()
-        )
-
-        OutlinedTextField(
-            value = age,
-            onValueChange = { age = it },
-            label = { Text("Age") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        OutlinedTextField(
-            value = height,
-            onValueChange = { height = it },
-            label = { Text("Height (cm)") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        OutlinedTextField(
-            value = weight,
-            onValueChange = { weight = it },
-            label = { Text("Weight (kg)") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        OutlinedTextField(
-            value = motivation,
-            onValueChange = { motivation = it },
-            label = { Text("Motivation / Goal") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(onClick = {
-            if (
-                name.isNotBlank() &&
-                password.isNotBlank() &&
-                motivation.isNotBlank() &&
-                age.isNotBlank() &&
-                height.isNotBlank() &&
-                weight.isNotBlank()
-            ) {
-                val ageInt = age.toIntOrNull()
-                val heightFloat = height.toFloatOrNull()
-                val weightFloat = weight.toFloatOrNull()
-
-                if (ageInt == null || heightFloat == null || weightFloat == null) {
-                    Toast.makeText(context, "Please enter valid numbers for age, height, and weight", Toast.LENGTH_SHORT).show()
-                    return@Button
-                }
-
-                val updatedUser = user.copy(
-                    name = name,
-                    password = password,
-                    age = ageInt,
-                    height = heightFloat,
-                    weight = weightFloat,
-                    goal = motivation,
-                    isLoggedIn = true
-                )
-
-                val currentUser = FirebaseAuth.getInstance().currentUser
-
-                if (currentUser != null) {
-                    currentUser.updatePassword(password).addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            FirebaseDatabaseHelper.saveUserData(updatedUser) { success ->
-                                if (success) {
-                                    userViewModel.fetchUserData(email) { _, _ -> }
-                                    Toast.makeText(context, "Profile updated!", Toast.LENGTH_SHORT).show()
-                                    navController.popBackStack()
-                                } else {
-                                    Toast.makeText(context, "Failed to update profile in database.", Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                        } else {
-                            Toast.makeText(context, "Failed to update password in Firebase Auth.", Toast.LENGTH_SHORT).show()
-                        }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "💪 Stronger'n Better 💪",
+                        color = Color.White,
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
                     }
-                } else {
-                    Toast.makeText(context, "No user is logged in.", Toast.LENGTH_SHORT).show()
-                }
-            } else {
-                Toast.makeText(context, "Please fill all fields", Toast.LENGTH_SHORT).show()
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Black)
+            )
+        }
+    ) { padding ->
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Name") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = { Text("Email") },
+                singleLine = true,
+                enabled = false,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            // Old Password
+            OutlinedTextField(
+                value = oldPassword,
+                onValueChange = { oldPassword = it },
+                label = { Text("Old Password") },
+                singleLine = true,
+                visualTransformation = if (showOldPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    val iconText = if (showOldPassword) "Hide" else "Show"
+                    TextButton(onClick = { showOldPassword = !showOldPassword }) {
+                        Text(iconText)
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            // New Password
+            OutlinedTextField(
+                value = newPassword,
+                onValueChange = { newPassword = it },
+                label = { Text("New Password") },
+                singleLine = true,
+                visualTransformation = if (showNewPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    val iconText = if (showNewPassword) "Hide" else "Show"
+                    TextButton(onClick = { showNewPassword = !showNewPassword }) {
+                        Text(iconText)
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = age,
+                onValueChange = { if (it.all { ch -> ch.isDigit() }) age = it },
+                label = { Text("Age") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = height,
+                onValueChange = { if (it.all { ch -> ch.isDigit() || ch == '.' }) height = it },
+                label = { Text("Height (cm)") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = weight,
+                onValueChange = { if (it.all { ch -> ch.isDigit() || ch == '.' }) weight = it },
+                label = { Text("Weight (kg)") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = motivation,
+                onValueChange = { motivation = it },
+                label = { Text("Motivation") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(100.dp)
+            )
+
+            if (message.isNotEmpty()) {
+                Text(text = message, color = Color.Red)
             }
-        }) {
-            Text("Save Changes")
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Button(
+                onClick = {
+                    isLoading = true
+                    val ageInt = age.toIntOrNull() ?: 0
+                    val heightFloat = height.toFloatOrNull() ?: 0f
+                    val weightFloat = weight.toFloatOrNull() ?: 0f
+
+                    userViewModel.updateProfile(
+                        email = email,
+                        oldPassword = oldPassword,
+                        newPassword = newPassword,
+                        name = name,
+                        age = ageInt,
+                        height = heightFloat,
+                        weight = weightFloat,
+                        motivation = motivation
+                    ) { success, resultMessage ->
+                        isLoading = false
+                        message = if (success) "Profile updated successfully" else "Update failed: $resultMessage"
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Black,
+                    contentColor = Color.White
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(24.dp)
+                    )
+                } else {
+                    Text("Save")
+                }
+            }
         }
     }
 }

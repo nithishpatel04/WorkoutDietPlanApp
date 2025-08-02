@@ -3,11 +3,13 @@ package com.example.workoutdietplanapp.firebase
 import com.example.workoutdietplanapp.viewmodel.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
+import kotlinx.coroutines.tasks.await
 
 object FirebaseDatabaseHelper {
 
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
-    private val database: DatabaseReference = FirebaseDatabase.getInstance().reference.child("users")
+    private val database: DatabaseReference =
+        FirebaseDatabase.getInstance().reference.child("users")
 
     // Register user in Firebase Authentication (Email/Password)
     fun registerUserAuth(email: String, password: String, callback: (Boolean, String) -> Unit) {
@@ -21,7 +23,7 @@ object FirebaseDatabaseHelper {
             }
     }
 
-    // Save user profile data in Realtime Database under "users/{uid}"
+    // Save user profile data in Realtime Database (callback version)
     fun saveUserData(user: User, callback: (Boolean) -> Unit) {
         val currentUser = auth.currentUser
         if (currentUser == null) {
@@ -30,16 +32,18 @@ object FirebaseDatabaseHelper {
         }
 
         val uid = currentUser.uid
-        // Write user data excluding password for security reasons if desired
         val userMap = mapOf(
             "email" to user.email,
+            "password" to user.password,
             "name" to user.name,
             "age" to user.age,
+            "height" to user.height,
             "weight" to user.weight,
             "goal" to user.goal,
             "subscriptionType" to user.subscriptionType,
             "gymPlan" to user.gymPlan,
-            "dietPlan" to user.dietPlan
+            "dietPlan" to user.dietPlan,
+            "isLoggedIn" to user.isLoggedIn
         )
 
         database.child(uid).setValue(userMap)
@@ -48,28 +52,26 @@ object FirebaseDatabaseHelper {
     }
 
     // Fetch user profile data from Realtime Database by UID
-    fun fetchUserData(uid: String, callback: (User?) -> Unit) {
+    fun fetchUserData(email: String, callback: (User?) -> Unit) {
+        val currentUser = auth.currentUser ?: return callback(null)
+        val uid = currentUser.uid
+
         database.child(uid).addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 if (snapshot.exists()) {
-                    val email = snapshot.child("email").getValue(String::class.java) ?: ""
-                    val name = snapshot.child("name").getValue(String::class.java) ?: ""
-                    val age = snapshot.child("age").getValue(Int::class.java) ?: 0
-                    val weight = snapshot.child("weight").getValue(Double::class.java)?.toFloat() ?: 0f
-                    val goal = snapshot.child("goal").getValue(String::class.java) ?: ""
-                    val subscriptionType = snapshot.child("subscriptionType").getValue(String::class.java) ?: ""
-                    val gymPlan = snapshot.child("gymPlan").getValue(Boolean::class.java) ?: false
-                    val dietPlan = snapshot.child("dietPlan").getValue(Boolean::class.java) ?: false
-
                     val user = User(
-                        email = email,
-                        name = name,
-                        age = age,
-                        weight = weight,
-                        goal = goal,
-                        subscriptionType = subscriptionType,
-                        gymPlan = gymPlan,
-                        dietPlan = dietPlan,
+                        email = snapshot.child("email").getValue(String::class.java) ?: "",
+                        password = snapshot.child("password").getValue(String::class.java) ?: "",
+                        name = snapshot.child("name").getValue(String::class.java) ?: "",
+                        age = snapshot.child("age").getValue(Int::class.java) ?: 0,
+                        height = snapshot.child("height").getValue(Float::class.java) ?: 0f,
+                        weight = snapshot.child("weight").getValue(Float::class.java) ?: 0f,
+                        goal = snapshot.child("goal").getValue(String::class.java) ?: "",
+                        subscriptionType = snapshot.child("subscriptionType")
+                            .getValue(String::class.java) ?: "",
+                        gymPlan = snapshot.child("gymPlan").getValue(Boolean::class.java) ?: false,
+                        dietPlan = snapshot.child("dietPlan").getValue(Boolean::class.java)
+                            ?: false,
                         isLoggedIn = true
                     )
                     callback(user)
@@ -82,5 +84,36 @@ object FirebaseDatabaseHelper {
                 callback(null)
             }
         })
+    }
+
+    // -----------------------------
+    // SUSPEND VERSION for Coroutines
+    // -----------------------------
+
+    // Suspend function to save user data
+    suspend fun saveUserDataSuspend(user: User): Boolean {
+        val currentUser = auth.currentUser ?: return false
+        val uid = currentUser.uid
+
+        val userMap = mapOf(
+            "email" to user.email,
+            "password" to user.password,
+            "name" to user.name,
+            "age" to user.age,
+            "height" to user.height,
+            "weight" to user.weight,
+            "goal" to user.goal,
+            "subscriptionType" to user.subscriptionType,
+            "gymPlan" to user.gymPlan,
+            "dietPlan" to user.dietPlan,
+            "isLoggedIn" to user.isLoggedIn
+        )
+
+        return try {
+            database.child(uid).setValue(userMap).await()
+            true
+        } catch (e: Exception) {
+            false
+        }
     }
 }

@@ -1,25 +1,27 @@
 package com.example.workoutdietplanapp.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.workoutdietplanapp.firebase.FirebaseDatabaseHelper
 import com.example.workoutdietplanapp.models.DietPlan
 import com.example.workoutdietplanapp.models.WorkoutPlan
+import com.google.firebase.auth.EmailAuthProvider
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+
+// User data class
 
 data class User(
     val email: String = "",
     val password: String = "",
     val name: String = "",
     val age: Int = 0,
-    val height: Float = 170f,      // Added height in cm
-    val weight: Float = 70f,       // weight in kg
-    val goal: String = "",         // internal name is goal
+    val height: Float = 170f,
+    val weight: Float = 70f,
+    val goal: String = "",
     val subscriptionType: String = "",
     val gymPlan: Boolean = false,
     val dietPlan: Boolean = false,
@@ -31,17 +33,14 @@ class UserViewModel : ViewModel() {
     private val _user = MutableStateFlow(User())
     val user: StateFlow<User> = _user
 
-    private val _heightCm = MutableStateFlow(_user.value.height)
-    val heightCm: StateFlow<Float> = _heightCm
-
-    private val _weightKg = MutableStateFlow(_user.value.weight)
-    val weightKg: StateFlow<Float> = _weightKg
-
-    private val _isDietSelected = MutableStateFlow(false)
-    val isDietSelected: StateFlow<Boolean> = _isDietSelected
-
-    private val _level = MutableStateFlow("Beginner")
-    val level: StateFlow<String> = _level
+    val heightCm: MutableStateFlow<Float> = MutableStateFlow(_user.value.height)
+    val weightKg: MutableStateFlow<Float> = MutableStateFlow(_user.value.weight)
+    val goal: MutableStateFlow<String> = MutableStateFlow(_user.value.goal)
+    val subscriptionType: MutableStateFlow<String> = MutableStateFlow(_user.value.subscriptionType)
+    val gymPlan: MutableStateFlow<Boolean> = MutableStateFlow(_user.value.gymPlan)
+    val dietPlanSelected: MutableStateFlow<Boolean> = MutableStateFlow(_user.value.dietPlan)
+    val isDietSelected: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val level: MutableStateFlow<String> = MutableStateFlow("Beginner")
 
     private val _workouts = MutableStateFlow<List<WorkoutPlan>>(emptyList())
     val workouts: StateFlow<List<WorkoutPlan>> = _workouts
@@ -49,75 +48,98 @@ class UserViewModel : ViewModel() {
     private val _dietPlan = MutableStateFlow<DietPlan?>(null)
     val dietPlan: StateFlow<DietPlan?> = _dietPlan
 
-    private val viewModelScope = CoroutineScope(Dispatchers.Main)
-
     init {
-        // Sync height and weight with user data changes
         viewModelScope.launch {
             _user.collect { user ->
-                _heightCm.value = user.height
-                _weightKg.value = user.weight
+                heightCm.value = user.height
+                weightKg.value = user.weight
+                goal.value = user.goal
+                subscriptionType.value = user.subscriptionType
+                gymPlan.value = user.gymPlan
+                dietPlanSelected.value = user.dietPlan
             }
         }
-        loadPlans(_level.value)
+        loadPlans(level.value)
     }
 
     fun login(email: String) {
-        _user.update { it.copy(email = email, isLoggedIn = true) }
+        _user.value = _user.value.copy(email = email, isLoggedIn = true)
     }
 
     fun updateProfile(
         email: String,
-        password: String,
+        oldPassword: String,
+        newPassword: String,
         name: String,
         age: Int,
         height: Float,
         weight: Float,
-        subscriptionType: String,
-        gymPlan: Boolean,
-        dietPlan: Boolean,
-        motivation: String
+        motivation: String,
+        onResult: (Boolean, String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val currentUser = FirebaseAuth.getInstance().currentUser ?: throw Exception("User not authenticated")
+                val credential = EmailAuthProvider.getCredential(email, oldPassword)
+                currentUser.reauthenticate(credential).await()
+                currentUser.updatePassword(newPassword).await()
+
+                val updatedUser = _user.value.copy(
+                    email = email,
+                    password = newPassword,
+                    name = name,
+                    age = age,
+                    height = height,
+                    weight = weight,
+                    goal = motivation
+                )
+
+                val saveSuccess = FirebaseDatabaseHelper.saveUserDataSuspend(updatedUser)
+                if (!saveSuccess) throw Exception("Failed to save profile data")
+
+                _user.value = updatedUser
+                onResult(true, "Profile updated successfully")
+            } catch (e: Exception) {
+                onResult(false, e.message ?: "Profile update failed")
+            }
+        }
+    }
+
+    fun setUser(
+        name: String,
+        email: String,
+        age: Int,
+        height: Float,
+        weight: Float,
+        subscriptionType: String = "",
+        gymPlan: Boolean = false,
+        dietPlan: Boolean = false,
+        goal: String = ""
     ) {
         _user.value = _user.value.copy(
-            email = email,
-            password = password,
             name = name,
+            email = email,
             age = age,
             height = height,
             weight = weight,
             subscriptionType = subscriptionType,
             gymPlan = gymPlan,
             dietPlan = dietPlan,
-            goal = motivation
+            goal = goal
         )
-        _heightCm.value = height
-        _weightKg.value = weight
     }
 
-    fun setUser(name: String, email: String, age: Int, height: Float, weight: Float) {
-        _user.value = _user.value.copy(
-            name = name,
-            email = email,
-            age = age,
-            height = height,
-            weight = weight
-        )
-        _heightCm.value = height
-        _weightKg.value = weight
-    }
 
     fun updateHeight(height: Float) {
-        _heightCm.value = height
         _user.value = _user.value.copy(height = height)
     }
 
     fun updateWeight(weight: Float) {
-        _weightKg.value = weight
         _user.value = _user.value.copy(weight = weight)
     }
 
     fun toggleView() {
-        _isDietSelected.value = !_isDietSelected.value
+        isDietSelected.value = !isDietSelected.value
     }
 
     fun loadPlans(level: String) {
@@ -156,7 +178,6 @@ class UserViewModel : ViewModel() {
 
     fun isLoggedIn(): Boolean = _user.value.isLoggedIn
 
-    // Register user in Firebase Authentication + save user data to Firebase Realtime DB
     fun registerUser(
         email: String,
         password: String,
@@ -200,23 +221,14 @@ class UserViewModel : ViewModel() {
         }
     }
 
-    // Fetch user profile data from Firebase Realtime DB by email
     fun fetchUserData(email: String, onResult: (Boolean, String) -> Unit) {
         FirebaseDatabaseHelper.fetchUserData(email) { fetchedUser ->
             if (fetchedUser != null) {
                 _user.value = fetchedUser.copy(isLoggedIn = true)
-                _heightCm.value = fetchedUser.height
-                _weightKg.value = fetchedUser.weight
                 onResult(true, "User data loaded")
             } else {
                 onResult(false, "Failed to load user data")
             }
         }
-    }
-
-    // Update user profile locally after editing
-    fun updateUserLocally(name: String, password: String, goal: String) {
-        val current = _user.value
-        _user.value = current.copy(name = name, password = password, goal = goal)
     }
 }

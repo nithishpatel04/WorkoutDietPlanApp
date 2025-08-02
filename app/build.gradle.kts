@@ -48,6 +48,8 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.6.1")
     implementation("com.google.firebase:firebase-auth:22.3.1")
     implementation("com.google.firebase:firebase-database-ktx:21.0.0")
+    implementation("androidx.compose.material3:material3:1.1.0")
+// or latest stable version
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
